@@ -8,6 +8,13 @@ See [franklin_county_ollama](franklin_county_ollama/) for a sample that starts a
 MCP server exposing `franklin_county_auditor_search`, connects to it from an
 Ollama client, and logs the model/tool exchange.
 
+## Butler County Auditor with Ollama
+
+See [butler_auditor_ollama](butler_auditor_ollama/) for a sample that starts an
+MCP server exposing `butler_county_auditor_search` (the same shared iasWorld
+platform as Franklin, with alphanumeric parcels), connects to it from an Ollama
+client, and logs the model/tool exchange.
+
 ## HOA Contact Search with Ollama
 
 See [hoa_serpapi_ollama](hoa_serpapi_ollama/) for a sample that asks Ollama a

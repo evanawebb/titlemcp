@@ -74,7 +74,7 @@ output).
 | Clermont | `clermontauditorrealestate.org/_web/` | `jur=000`, **alphanumeric** parcels — **enabled** |
 | Montgomery | `www.mcrealestate.org/` | `jur=000`, no `/_web/` prefix |
 | Stark | `realestate.starkcountyohio.gov/` | `jur=000` |
-| Butler | `propertysearch.bcohio.gov/` | |
+| Butler | `propertysearch.bcohio.gov/` | `jur=000`, **alphanumeric** parcels — **enabled** |
 | Lucas | `icare.co.lucas.oh.us/lucascare/` | branded "AREIS"; path prefix |
 | Summit | `propertyaccess.summitoh.net/` | uses `mode=realprop` |
 | Lake | `auditor.lakecountyohio.gov/` | page identifies as "iasWorld"; `mode=realprop` |
@@ -116,7 +116,7 @@ variation — alphanumeric parcel IDs — which was absorbed by one shared knob
 (`numeric_parcel_ids`) that every future alphanumeric-parcel county now inherits
 for free. That is the extraction's payoff in one PR.
 
-Remaining: Montgomery, Stark, Butler, Lucas, Summit, Lake — roughly in that order.
+Remaining: Montgomery, Stark, Lucas, Summit, Lake — roughly in that order.
 Each county is one PR:
 
 1. Append an `IasWorldSiteConfig` to `OH_IASWORLD_SITES` in `sites.py`.

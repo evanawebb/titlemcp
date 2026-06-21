@@ -10,7 +10,7 @@ from pathlib import Path
 from titlemcp_us_oh_auditor.adapters import OhioCountyAuditorAdapter
 from titlemcp_us_oh_auditor.manifest import capability_manifest
 from titlemcp_us_oh_auditor.plugin import OhioAuditorPlugin
-from titlemcp_us_oh_auditor.sites import CLERMONT, FRANKLIN, OH_IASWORLD_SITES
+from titlemcp_us_oh_auditor.sites import BUTLER, CLERMONT, FRANKLIN, OH_IASWORLD_SITES
 from titlemcp_us_oh_auditor.toolsets import OhioAuditorToolset
 
 from title_mcp.domain.models import Jurisdiction, WorkflowKind
@@ -55,6 +55,16 @@ class OhioAuditorContractTests(unittest.TestCase):
         self.assertEqual(CLERMONT.district_code, "000")
         self.assertFalse(CLERMONT.numeric_parcel_ids)
         self.assertEqual(CLERMONT.tool_name, "clermont_county_auditor_search")
+
+    def test_sites_table_includes_butler_with_alphanumeric_parcels(self) -> None:
+        # Butler: config entry only. jur=000 confirmed live; 14-char alphanumeric
+        # parcels (e.g. "A0700005") mean numeric_parcel_ids=False.
+        self.assertIn(BUTLER, OH_IASWORLD_SITES)
+        self.assertEqual(BUTLER.source_id, "us-oh-butler-auditor")
+        self.assertEqual(BUTLER.district_code, "000")
+        self.assertEqual(BUTLER.base_url, "https://propertysearch.bcohio.gov/")
+        self.assertFalse(BUTLER.numeric_parcel_ids)
+        self.assertEqual(BUTLER.tool_name, "butler_county_auditor_search")
 
     def test_adapter_supports_ohio_tax_certificate(self) -> None:
         adapter = OhioCountyAuditorAdapter()
