@@ -8,6 +8,13 @@ See [franklin_county_ollama](franklin_county_ollama/) for a sample that starts a
 MCP server exposing `franklin_county_auditor_search`, connects to it from an
 Ollama client, and logs the model/tool exchange.
 
+## Stark County Auditor with Ollama
+
+See [stark_auditor_ollama](stark_auditor_ollama/) for a sample that starts an
+MCP server exposing `stark_county_auditor_search`, connects to it from an Ollama
+client, and logs the model/tool exchange. Stark runs the same iasWorld platform
+as Franklin (basic search under `mode=realprop`, Public Access detail layout).
+
 ## HOA Contact Search with Ollama
 
 See [hoa_serpapi_ollama](hoa_serpapi_ollama/) for a sample that asks Ollama a

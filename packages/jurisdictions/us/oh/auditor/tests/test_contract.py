@@ -10,7 +10,7 @@ from pathlib import Path
 from titlemcp_us_oh_auditor.adapters import OhioCountyAuditorAdapter
 from titlemcp_us_oh_auditor.manifest import capability_manifest
 from titlemcp_us_oh_auditor.plugin import OhioAuditorPlugin
-from titlemcp_us_oh_auditor.sites import CLERMONT, FRANKLIN, OH_IASWORLD_SITES
+from titlemcp_us_oh_auditor.sites import CLERMONT, FRANKLIN, OH_IASWORLD_SITES, STARK
 from titlemcp_us_oh_auditor.toolsets import OhioAuditorToolset
 
 from title_mcp.domain.models import Jurisdiction, WorkflowKind
@@ -18,6 +18,7 @@ from title_mcp.sources import SourceKind, SourceQuery, SourceResultStatus
 from title_mcp.sources.registry import SourceConnectorRegistry
 from titlemcp_platform_iasworld import (
     AuditorSearchMode,
+    DetailProfile,
     IasWorldAuditorParcelDetail,
     IasWorldAuditorSearchHit,
     IasWorldAuditorSearchQuery,
@@ -55,6 +56,24 @@ class OhioAuditorContractTests(unittest.TestCase):
         self.assertEqual(CLERMONT.district_code, "000")
         self.assertFalse(CLERMONT.numeric_parcel_ids)
         self.assertEqual(CLERMONT.tool_name, "clermont_county_auditor_search")
+
+    def test_sites_table_includes_stark_with_realprop_mode(self) -> None:
+        # Stark is another config-only county: iasWorld Public Access on a bare
+        # domain whose basic search is served under mode=realprop, so every mode
+        # maps to realprop and the detail uses the Public Access split layout.
+        self.assertIn(STARK, OH_IASWORLD_SITES)
+        self.assertEqual(STARK.source_id, "us-oh-stark-auditor")
+        self.assertEqual(STARK.district_code, "000")
+        self.assertTrue(STARK.numeric_parcel_ids)
+        self.assertEqual(STARK.tool_name, "stark_county_auditor_search")
+        self.assertEqual(STARK.detail_profile, DetailProfile.PUBLIC_ACCESS)
+        self.assertEqual(STARK.url_mode(AuditorSearchMode.ADDRESS), "realprop")
+        self.assertEqual(STARK.url_mode(AuditorSearchMode.OWNER), "realprop")
+        self.assertEqual(STARK.url_mode(AuditorSearchMode.PARCEL_ID), "realprop")
+        self.assertEqual(
+            STARK.search_url(AuditorSearchMode.ADDRESS),
+            "https://realestate.starkcountyohio.gov/search/commonsearch.aspx?mode=realprop",
+        )
 
     def test_adapter_supports_ohio_tax_certificate(self) -> None:
         adapter = OhioCountyAuditorAdapter()

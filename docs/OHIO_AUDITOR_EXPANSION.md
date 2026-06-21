@@ -73,7 +73,7 @@ output).
 | Franklin | `property.franklincountyauditor.com/_web/` | `jur=025`, numeric parcels — **enabled** |
 | Clermont | `clermontauditorrealestate.org/_web/` | `jur=000`, **alphanumeric** parcels — **enabled** |
 | Montgomery | `www.mcrealestate.org/` | `jur=000`, no `/_web/` prefix |
-| Stark | `realestate.starkcountyohio.gov/` | `jur=000` |
+| Stark | `realestate.starkcountyohio.gov/` | `jur=000`, `mode=realprop`, Public Access detail — **enabled** |
 | Butler | `propertysearch.bcohio.gov/` | |
 | Lucas | `icare.co.lucas.oh.us/lucascare/` | branded "AREIS"; path prefix |
 | Summit | `propertyaccess.summitoh.net/` | uses `mode=realprop` |
@@ -116,7 +116,13 @@ variation — alphanumeric parcel IDs — which was absorbed by one shared knob
 (`numeric_parcel_ids`) that every future alphanumeric-parcel county now inherits
 for free. That is the extraction's payoff in one PR.
 
-Remaining: Montgomery, Stark, Butler, Lucas, Summit, Lake — roughly in that order.
+**Stark is enabled** as the first `mode=realprop` county: its basic search is a
+unified `realprop` page (like Summit/Lake) rather than the separate
+address/owner/parid pages, absorbed entirely by the existing `mode_map` knob (all
+modes map to `realprop`); it also serves the Public Access split-section detail
+(`detail_profile=PUBLIC_ACCESS`). No new scraper — config only.
+
+Remaining: Montgomery, Butler, Lucas, Summit, Lake — roughly in that order.
 Each county is one PR:
 
 1. Append an `IasWorldSiteConfig` to `OH_IASWORLD_SITES` in `sites.py`.

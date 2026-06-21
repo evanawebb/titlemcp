@@ -44,6 +44,30 @@ point:
 .venv/bin/pip install -e packages/jurisdictions/us/oh/auditor
 ```
 
+## Stark County Auditor
+
+Parcel search:
+
+```bash
+python samples/stark_auditor_ollama/ollama_client.py \
+  --scenario parcel \
+  --parcel-id "01000123"
+```
+
+Address search:
+
+```bash
+python samples/stark_auditor_ollama/ollama_client.py \
+  --scenario address \
+  --address "100 Example Ave"
+```
+
+The prompt does not name `stark_county_auditor_search`; the sample verifies that
+the model chooses it. Stark runs the same iasWorld platform as Franklin (its
+basic search is served under `mode=realprop` and its detail uses the Public
+Access layout), so the same shared platform and Ohio auditor packages must be
+installed in editable mode (see above).
+
 ## HOA Contact Search
 
 Search by HOA name and state:
