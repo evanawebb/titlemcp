@@ -75,7 +75,7 @@ output).
 | Montgomery | `www.mcrealestate.org/` | `jur=000`, no `/_web/` prefix |
 | Stark | `realestate.starkcountyohio.gov/` | `jur=000` |
 | Butler | `propertysearch.bcohio.gov/` | |
-| Lucas | `icare.co.lucas.oh.us/lucascare/` | branded "AREIS"; path prefix |
+| Lucas | `icare.co.lucas.oh.us/lucascare/` | branded "AREIS"; path prefix; `jur=000` (defaulted) — **enabled** |
 | Summit | `propertyaccess.summitoh.net/` | uses `mode=realprop` |
 | Lake | `auditor.lakecountyohio.gov/` | page identifies as "iasWorld"; `mode=realprop` |
 
@@ -116,7 +116,15 @@ variation — alphanumeric parcel IDs — which was absorbed by one shared knob
 (`numeric_parcel_ids`) that every future alphanumeric-parcel county now inherits
 for free. That is the extraction's payoff in one PR.
 
-Remaining: Montgomery, Stark, Butler, Lucas, Summit, Lake — roughly in that order.
+**Lucas is enabled** as the first AREIS-branded, path-prefix base-URL county
+(`.../lucascare/`), confirming the platform layer handles a non-`/_web/` base. Its
+site was in scheduled maintenance during recon, so `district_code`,
+`numeric_parcel_ids`, and `detail_profile` use the safe iasWorld defaults
+(`000`, numeric, CLASSIC) and should be re-verified against live result/datalet
+pages when the site is reachable; the live footer ("Powered by iasWorld Public
+Access") hints the detail layout may be `PUBLIC_ACCESS`.
+
+Remaining: Montgomery, Stark, Butler, Summit, Lake — roughly in that order.
 Each county is one PR:
 
 1. Append an `IasWorldSiteConfig` to `OH_IASWORLD_SITES` in `sites.py`.
