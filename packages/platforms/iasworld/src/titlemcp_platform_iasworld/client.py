@@ -381,8 +381,20 @@ class IasWorldAuditorClient:
                 "hdAction": "Search",
             }
         )
-        form_data.update(fields)
+        form_data.update(self._apply_field_overrides(fields))
         return (*self._post(search_url, form_data, referer=search_url), site_year)
+
+    def _apply_field_overrides(self, fields: dict[str, str]) -> dict[str, str]:
+        """Rename POST field keys for sites whose form labels differ.
+
+        Most iasWorld counties share the classic field names; Lake's unified
+        ``realprop`` form uses ``inpNo``/``inpOwner1`` instead of
+        ``inpNumber``/``inpOwner``. With no overrides the dict is unchanged.
+        """
+        overrides = self.config.form_field_overrides
+        if not overrides:
+            return fields
+        return {overrides.get(key, key): value for key, value in fields.items()}
 
     def _get(self, url: str) -> tuple[str, str]:
         return self._request(url)

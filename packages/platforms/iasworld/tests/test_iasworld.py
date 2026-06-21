@@ -128,6 +128,138 @@ class IasWorldConfigTests(unittest.TestCase):
         self.assertEqual(FRANKLIN.tool_title, "Franklin County Auditor Search")
 
 
+# Lake County serves a unified iasWorld "realprop" search whose form renames two
+# POST fields. These tests pin both halves of that knob: every mode routes to the
+# realprop URL, and the address-number / owner field names are remapped — while
+# the classic counties (no overrides) keep posting inpNumber / inpOwner.
+LAKE = IasWorldSiteConfig(
+    source_id="us-oh-lake-auditor",
+    county="Lake County",
+    state="OH",
+    name="Lake County, Ohio Auditor Property Search",
+    base_url="https://auditor.lakecountyohio.gov/",
+    district_code="000",
+    numeric_parcel_ids=False,
+    mode_map={
+        AuditorSearchMode.ADDRESS: "realprop",
+        AuditorSearchMode.OWNER: "realprop",
+        AuditorSearchMode.PARCEL_ID: "realprop",
+    },
+    form_field_overrides={"inpNumber": "inpNo", "inpOwner": "inpOwner1"},
+)
+
+
+class IasWorldFormFieldOverrideTests(unittest.TestCase):
+    def test_realprop_mode_map_routes_every_mode(self) -> None:
+        for mode in (
+            AuditorSearchMode.ADDRESS,
+            AuditorSearchMode.OWNER,
+            AuditorSearchMode.PARCEL_ID,
+        ):
+            self.assertEqual(
+                LAKE.search_url(mode),
+                "https://auditor.lakecountyohio.gov/search/commonsearch.aspx?mode=realprop",
+            )
+
+    def test_overrides_rename_address_and_owner_fields(self) -> None:
+        client = IasWorldAuditorClient(LAKE)
+
+        renamed = client._apply_field_overrides(
+            {"inpNumber": "100", "inpAdrdir": "N", "inpStreet": "EXAMPLE", "inpUnit": ""}
+        )
+
+        # Address number is remapped; street/direction/unit keep their names.
+        self.assertEqual(
+            renamed, {"inpNo": "100", "inpAdrdir": "N", "inpStreet": "EXAMPLE", "inpUnit": ""}
+        )
+
+        owner_fields = client._apply_field_overrides({"inpOwner": "DOE JANE A"})
+        self.assertEqual(owner_fields, {"inpOwner1": "DOE JANE A"})
+
+        # Parcel field is shared and never renamed.
+        self.assertEqual(
+            client._apply_field_overrides({"inpParid": "02A0010000050"}),
+            {"inpParid": "02A0010000050"},
+        )
+
+    def test_classic_counties_keep_field_names(self) -> None:
+        # Backward-compatibility guard: no overrides means the dict passes through.
+        client = IasWorldAuditorClient(FRANKLIN)
+
+        self.assertEqual(
+            client._apply_field_overrides({"inpNumber": "100", "inpOwner": "DOE JANE A"}),
+            {"inpNumber": "100", "inpOwner": "DOE JANE A"},
+        )
+
+    def test_submitted_post_body_uses_lake_field_names(self) -> None:
+        # End-to-end through _submit_search with a fake opener that captures the
+        # POST body, proving the remap reaches the wire for an owner search.
+        opener = _CaptureOpener(LAKE_SEARCH_HTML)
+        client = IasWorldAuditorClient(LAKE, opener=opener)
+
+        client.search(
+            IasWorldAuditorSearchQuery(
+                mode=AuditorSearchMode.OWNER,
+                owner_name="DOE JANE A",
+                include_details=False,
+            )
+        )
+
+        self.assertTrue(opener.post_bodies, "expected at least one POST")
+        body = opener.post_bodies[0]
+        self.assertIn("inpOwner1=", body)
+        self.assertNotIn("inpOwner=", body)
+
+
+LAKE_SEARCH_HTML = """
+<table id="searchResults">
+  <tr class="SearchResults"
+      onclick="javascript:selectSearchRow('../Datalets/Datalet.aspx?sIndex=0&idx=1')">
+    <td><input name="chkPin" value="000:02A0010000050:2026"></td>
+    <td><div>02A0010000050</div></td>
+    <td><div>100 EXAMPLE ST</div></td>
+    <td><div>DOE JANE A</div></td>
+    <td><div>EXAMPLE SUBDIVISION LOT 1</div></td>
+  </tr>
+</table>
+"""
+
+
+class _CaptureResponse:
+    def __init__(self, body: str, url: str) -> None:
+        self._body = body.encode("utf-8")
+        self._url = url
+
+    def read(self) -> bytes:
+        return self._body
+
+    def geturl(self) -> str:
+        return self._url
+
+    def __enter__(self) -> _CaptureResponse:
+        return self
+
+    def __exit__(self, *exc: object) -> None:
+        return None
+
+
+class _CaptureOpener:
+    """Minimal opener stand-in that records POST bodies and serves fixed HTML."""
+
+    def __init__(self, search_html: str) -> None:
+        self._search_html = search_html
+        self.post_bodies: list[str] = []
+
+    def open(self, request: object, timeout: float | None = None) -> _CaptureResponse:
+        data = getattr(request, "data", None)
+        url = getattr(request, "full_url", "https://auditor.lakecountyohio.gov/")
+        if data is None:
+            # The initial GET of the search form.
+            return _CaptureResponse("<form></form>", url)
+        self.post_bodies.append(data.decode("utf-8"))
+        return _CaptureResponse(self._search_html, url)
+
+
 class IasWorldCanonicalTests(unittest.TestCase):
     def test_source_connector_maps_to_canonical_record(self) -> None:
         connector = build_auditor_source_connector(FRANKLIN, client=_FakeClient())

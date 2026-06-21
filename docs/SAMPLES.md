@@ -44,6 +44,36 @@ point:
 .venv/bin/pip install -e packages/jurisdictions/us/oh/auditor
 ```
 
+## Lake County Auditor
+
+Parcel search:
+
+```bash
+python samples/lake_auditor_ollama/ollama_client.py \
+  --scenario parcel \
+  --parcel-id "02A0010000050"
+```
+
+Address search:
+
+```bash
+python samples/lake_auditor_ollama/ollama_client.py \
+  --scenario address \
+  --address "100 Example St"
+```
+
+The prompt does not name `lake_county_auditor_search`; the sample verifies that
+the model chooses it. Lake County's auditor site identifies as iasWorld but
+serves a single unified `realprop` search for parcel, owner, and address; a
+`mode_map` routes every mode to that URL and `form_field_overrides` rename the two
+POST fields it uses (`inpNumber` -> `inpNo`, `inpOwner` -> `inpOwner1`). The tool
+returns `title_mcp.property_assessment_record` and preserves the raw auditor
+payload under `source_specific.iasworld_auditor`. Lake's datalet detail layout is
+a third variant the shared profiles do not yet fully parse, so it is
+NEEDS-VERIFICATION (search + header-derived fields populate; deep detail
+extraction is a follow-up). It uses the same editable installs as the Franklin
+auditor sample above.
+
 ## HOA Contact Search
 
 Search by HOA name and state:
