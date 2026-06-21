@@ -21,9 +21,15 @@ new `IasWorldSiteConfig` entry plus a fixture-backed contract test and a sample.
 | --- | --- | --- | --- |
 | Franklin | `us-oh-franklin-auditor` | numeric | enabled |
 | Clermont | `us-oh-clermont-auditor` | alphanumeric | enabled |
+| Summit | `us-oh-summit-auditor` | alphanumeric (assumed) | needs-verification |
+
+Summit is wired as a config entry (unified iasWorld `mode=realprop` search via
+the `mode_map` knob) but is **needs-verification**: its live realprop search
+form, `jur` district code, and parcel format were not confirmable during recon
+(the site was returning a maintenance page), so no live fixture was captured.
 
 Confirmed on iasWorld and queued for enablement (need a captured fixture):
-Montgomery, Stark, Butler, Lucas, Summit, Lake. See
+Montgomery, Stark, Butler, Lucas, Lake. See
 [`docs/OHIO_AUDITOR_EXPANSION.md`](../../../../../docs/OHIO_AUDITOR_EXPANSION.md).
 
 ## How it registers

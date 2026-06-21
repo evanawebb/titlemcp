@@ -8,6 +8,14 @@ See [franklin_county_ollama](franklin_county_ollama/) for a sample that starts a
 MCP server exposing `franklin_county_auditor_search`, connects to it from an
 Ollama client, and logs the model/tool exchange.
 
+## Summit County Auditor with Ollama
+
+See [summit_auditor_ollama](summit_auditor_ollama/) for a sample that starts an
+MCP server exposing `summit_county_auditor_search`, connects to it from an Ollama
+client, and logs the model/tool exchange. Summit is **needs-verification** — it
+serves a unified iasWorld `mode=realprop` search and its live form/`jur`/parcel
+format were not confirmable during recon.
+
 ## HOA Contact Search with Ollama
 
 See [hoa_serpapi_ollama](hoa_serpapi_ollama/) for a sample that asks Ollama a

@@ -76,7 +76,7 @@ output).
 | Stark | `realestate.starkcountyohio.gov/` | `jur=000` |
 | Butler | `propertysearch.bcohio.gov/` | |
 | Lucas | `icare.co.lucas.oh.us/lucascare/` | branded "AREIS"; path prefix |
-| Summit | `propertyaccess.summitoh.net/` | uses `mode=realprop` |
+| Summit | `propertyaccess.summitoh.net/` | `jur=000` (assumed), unified `mode=realprop` search — **needs-verification** (config entry added; live form/jur/parcel unconfirmed) |
 | Lake | `auditor.lakecountyohio.gov/` | page identifies as "iasWorld"; `mode=realprop` |
 
 ### Bespoke (need their own connector — grouped by vendor)
@@ -116,7 +116,7 @@ variation — alphanumeric parcel IDs — which was absorbed by one shared knob
 (`numeric_parcel_ids`) that every future alphanumeric-parcel county now inherits
 for free. That is the extraction's payoff in one PR.
 
-Remaining: Montgomery, Stark, Butler, Lucas, Summit, Lake — roughly in that order.
+Remaining: Montgomery, Stark, Butler, Lucas, Lake — roughly in that order.
 Each county is one PR:
 
 1. Append an `IasWorldSiteConfig` to `OH_IASWORLD_SITES` in `sites.py`.
@@ -131,6 +131,23 @@ Each county is one PR:
 > alphanumeric parcels, and the Public Access detail profile all populate the
 > canonical record). Its committed test fixtures use **synthetic** owner/parcel
 > data — no real property records are checked into this open-source repo.
+
+**Summit is wired but `needs-verification`.** It is the first `mode=realprop`
+county. Recon confirmed iasWorld Public Access and that the only reachable search
+link is `search/commonsearch.aspx?mode=realprop`. realprop is the same
+`commonsearch.aspx` handler with a unified form, so it was implemented
+**config-only**: a `mode_map` routing every search mode to `realprop` (no
+platform/client change — the shared client GETs the form, carries its hidden
+inputs forward, and overlays the standard `inp*` fields). What is **not** yet
+confirmed, because the live site was returning a maintenance/disclaimer page
+during recon: the realprop form field names (does it accept the same
+`inpNumber`/`inpStreet`/`inpParid`/`inpOwner` as the per-mode pages?), the `jur`
+district code (defaulted `000`), and the parcel format (defaulted alphanumeric,
+the safe superset). No live fixture was captured. Before flipping Summit to
+`enabled`: capture a live realprop search + detail HTML fixture, confirm the form
+fields, `jur`, and parcel format, and — only if the field names differ from the
+per-mode pages — make a minimal, backward-compatible client change for the
+realprop form (currently believed unnecessary).
 
 Add per-site politeness (User-Agent already derives from `base_url`; add rate
 limiting / backoff) once multiple live counties are in play.
@@ -159,7 +176,12 @@ Mirrors the four-part contract in [`AGENTS.md`](../AGENTS.md):
 - **Fixtures are the real Phase 2 cost.** The scraping logic is free; each county
   needs a captured search + detail page. Without one, a county stays disabled.
 - **`mode=realprop` counties** (Summit, Lake) may need form-field handling beyond
-  the URL `mode` override — verify when enabling them.
+  the URL `mode` override — verify when enabling them. Summit is wired config-only
+  (a `mode_map` routing every mode to `realprop`) on the assumption the unified
+  form reuses the same `inp*` fields; this is **unverified** (site was in
+  maintenance during recon) and is why Summit ships as `needs-verification`. If a
+  captured realprop form turns out to use different field names, a minimal
+  backward-compatible client change will be needed.
 - **One readiness gate, many counties.** `titlemcp-us-oh-auditor` publishes as one
   package; a flaky county can hold the whole release. Consider per-site readiness
   flags in the config if this bites.

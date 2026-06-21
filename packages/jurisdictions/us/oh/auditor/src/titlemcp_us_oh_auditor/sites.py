@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from titlemcp_platform_iasworld import DetailProfile, IasWorldSiteConfig
+from titlemcp_platform_iasworld import AuditorSearchMode, DetailProfile, IasWorldSiteConfig
 
 # The table of Ohio county auditor sites that run the Tyler iasWorld platform.
 # Adding a county is a config entry here (plus a fixture-backed contract test and
@@ -39,7 +39,46 @@ CLERMONT = IasWorldSiteConfig(
     priority=230,
 )
 
+# Summit County (Fiscal Office) runs iasWorld Public Access, but instead of the
+# separate address/owner/parid search pages it serves a single unified
+# "realprop" search — confirmed live: the only reachable search link is
+# search/commonsearch.aspx?mode=realprop and the footer reads "Powered by
+# iasWorld Public Access". commonsearch.aspx is the same ASP.NET handler for
+# every mode; the platform client GETs the realprop form, carries forward all of
+# its hidden inputs, and overlays the standard inp* fields, so routing every
+# search mode to "realprop" via mode_map is a config-only change — no new
+# scraper. The unified page also uses the split Public Access datalet layout, so
+# detail_profile=PUBLIC_ACCESS (same as Clermont).
+#
+# NEEDS-VERIFICATION: the live realprop search FORM could not be captured (the
+# site was returning a maintenance/disclaimer page during recon), so the jur
+# district code (defaulted to "000"), parcel format (defaulted alphanumeric, the
+# safe superset), and the realprop form field names are unconfirmed against live
+# data. See docs/OHIO_AUDITOR_EXPANSION.md for the open items before enabling.
+SUMMIT = IasWorldSiteConfig(
+    source_id="us-oh-summit-auditor",
+    county="Summit County",
+    state="OH",
+    name="Summit County, Ohio Fiscal Office Property Search",
+    base_url="https://propertyaccess.summitoh.net/",
+    district_code="000",
+    # realprop is a unified search replacing the per-mode pages, so every search
+    # mode resolves to mode=realprop on commonsearch.aspx.
+    mode_map={
+        AuditorSearchMode.ADDRESS: "realprop",
+        AuditorSearchMode.OWNER: "realprop",
+        AuditorSearchMode.PARCEL_ID: "realprop",
+    },
+    # Alphanumeric is the safe superset until live parcels are captured: it
+    # preserves any letters/dots a numeric-only compaction would silently drop.
+    numeric_parcel_ids=False,
+    detail_profile=DetailProfile.PUBLIC_ACCESS,
+    owner="Summit County Fiscal Office",
+    priority=230,
+)
+
 OH_IASWORLD_SITES: list[IasWorldSiteConfig] = [
     FRANKLIN,
     CLERMONT,
+    SUMMIT,
 ]

@@ -44,6 +44,44 @@ point:
 .venv/bin/pip install -e packages/jurisdictions/us/oh/auditor
 ```
 
+## Summit County Auditor
+
+Summit is **needs-verification**: it runs iasWorld Public Access but serves a
+single unified `mode=realprop` search instead of the per-mode pages. The
+connector routes every search mode to `commonsearch.aspx?mode=realprop` via the
+shared `mode_map` knob; the live realprop form, `jur` code, and parcel format
+were not confirmable during recon (the site was in maintenance). The sample still
+exercises tool selection and the canonical contract.
+
+Parcel search:
+
+```bash
+python samples/summit_auditor_ollama/ollama_client.py \
+  --scenario parcel \
+  --parcel-id "0000123"
+```
+
+Address search:
+
+```bash
+python samples/summit_auditor_ollama/ollama_client.py \
+  --scenario address \
+  --address "100 Example Ave"
+```
+
+The prompt does not name `summit_county_auditor_search`; the sample verifies that
+the model chooses it. The tool returns `title_mcp.property_assessment_record` and
+preserves the raw auditor payload under `source_specific.iasworld_auditor`.
+
+Install the shared iasWorld platform package and the Ohio auditor package in
+editable mode so the standard server can load the `title_mcp.toolsets` entry
+point:
+
+```bash
+.venv/bin/pip install -e packages/platforms/iasworld
+.venv/bin/pip install -e packages/jurisdictions/us/oh/auditor
+```
+
 ## HOA Contact Search
 
 Search by HOA name and state:

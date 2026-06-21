@@ -10,7 +10,7 @@ from pathlib import Path
 from titlemcp_us_oh_auditor.adapters import OhioCountyAuditorAdapter
 from titlemcp_us_oh_auditor.manifest import capability_manifest
 from titlemcp_us_oh_auditor.plugin import OhioAuditorPlugin
-from titlemcp_us_oh_auditor.sites import CLERMONT, FRANKLIN, OH_IASWORLD_SITES
+from titlemcp_us_oh_auditor.sites import CLERMONT, FRANKLIN, OH_IASWORLD_SITES, SUMMIT
 from titlemcp_us_oh_auditor.toolsets import OhioAuditorToolset
 
 from title_mcp.domain.models import Jurisdiction, WorkflowKind
@@ -55,6 +55,20 @@ class OhioAuditorContractTests(unittest.TestCase):
         self.assertEqual(CLERMONT.district_code, "000")
         self.assertFalse(CLERMONT.numeric_parcel_ids)
         self.assertEqual(CLERMONT.tool_name, "clermont_county_auditor_search")
+
+    def test_sites_table_includes_summit_with_realprop_mode_map(self) -> None:
+        # Summit serves a single unified "realprop" search instead of the per-mode
+        # pages, so every search mode resolves to mode=realprop on commonsearch.aspx.
+        self.assertIn(SUMMIT, OH_IASWORLD_SITES)
+        self.assertEqual(SUMMIT.source_id, "us-oh-summit-auditor")
+        self.assertEqual(SUMMIT.district_code, "000")
+        self.assertEqual(SUMMIT.tool_name, "summit_county_auditor_search")
+        for mode in AuditorSearchMode:
+            self.assertEqual(SUMMIT.url_mode(mode), "realprop")
+            self.assertEqual(
+                SUMMIT.search_url(mode),
+                "https://propertyaccess.summitoh.net/search/commonsearch.aspx?mode=realprop",
+            )
 
     def test_adapter_supports_ohio_tax_certificate(self) -> None:
         adapter = OhioCountyAuditorAdapter()
