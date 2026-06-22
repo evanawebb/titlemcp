@@ -21,9 +21,18 @@ new `IasWorldSiteConfig` entry plus a fixture-backed contract test and a sample.
 | --- | --- | --- | --- |
 | Franklin | `us-oh-franklin-auditor` | numeric | enabled |
 | Clermont | `us-oh-clermont-auditor` | alphanumeric | enabled |
+| Lake | `us-oh-lake-auditor` | alphanumeric | needs-verification (search works; detail profile pending) |
+
+Lake's auditor identifies as iasWorld but serves a single unified `realprop`
+search for parcel/owner/address; two config knobs handle it (`mode_map` to the
+`realprop` URL plus `form_field_overrides` `inpNumber`->`inpNo`,
+`inpOwner`->`inpOwner1`). Its datalet detail layout is a third variant the shared
+`CLASSIC`/`PUBLIC_ACCESS` profiles do not yet fully parse, so search and the
+header-derived canonical fields populate but deep detail extraction
+(legal/taxes/valuation) is a follow-up (a `LAKE` `DetailProfile`).
 
 Confirmed on iasWorld and queued for enablement (need a captured fixture):
-Montgomery, Stark, Butler, Lucas, Summit, Lake. See
+Montgomery, Stark, Butler, Lucas, Summit. See
 [`docs/OHIO_AUDITOR_EXPANSION.md`](../../../../../docs/OHIO_AUDITOR_EXPANSION.md).
 
 ## How it registers

@@ -10,7 +10,7 @@ from pathlib import Path
 from titlemcp_us_oh_auditor.adapters import OhioCountyAuditorAdapter
 from titlemcp_us_oh_auditor.manifest import capability_manifest
 from titlemcp_us_oh_auditor.plugin import OhioAuditorPlugin
-from titlemcp_us_oh_auditor.sites import CLERMONT, FRANKLIN, OH_IASWORLD_SITES
+from titlemcp_us_oh_auditor.sites import CLERMONT, FRANKLIN, LAKE, OH_IASWORLD_SITES
 from titlemcp_us_oh_auditor.toolsets import OhioAuditorToolset
 
 from title_mcp.domain.models import Jurisdiction, WorkflowKind
@@ -55,6 +55,30 @@ class OhioAuditorContractTests(unittest.TestCase):
         self.assertEqual(CLERMONT.district_code, "000")
         self.assertFalse(CLERMONT.numeric_parcel_ids)
         self.assertEqual(CLERMONT.tool_name, "clermont_county_auditor_search")
+
+    def test_sites_table_includes_lake_with_realprop_unified_search(self) -> None:
+        # Lake serves a single unified "realprop" search for parcel/owner/address
+        # and renames two POST fields; both are config knobs (mode_map +
+        # form_field_overrides) on the shared platform. Parcels are alphanumeric.
+        self.assertIn(LAKE, OH_IASWORLD_SITES)
+        self.assertEqual(LAKE.source_id, "us-oh-lake-auditor")
+        self.assertEqual(LAKE.district_code, "000")
+        self.assertEqual(LAKE.base_url, "https://auditor.lakecountyohio.gov/")
+        self.assertFalse(LAKE.numeric_parcel_ids)
+        self.assertEqual(LAKE.tool_name, "lake_county_auditor_search")
+        self.assertEqual(
+            LAKE.form_field_overrides, {"inpNumber": "inpNo", "inpOwner": "inpOwner1"}
+        )
+        # Every mode resolves to the realprop unified-search URL.
+        for mode in (
+            AuditorSearchMode.ADDRESS,
+            AuditorSearchMode.OWNER,
+            AuditorSearchMode.PARCEL_ID,
+        ):
+            self.assertEqual(
+                LAKE.search_url(mode),
+                "https://auditor.lakecountyohio.gov/search/commonsearch.aspx?mode=realprop",
+            )
 
     def test_adapter_supports_ohio_tax_certificate(self) -> None:
         adapter = OhioCountyAuditorAdapter()

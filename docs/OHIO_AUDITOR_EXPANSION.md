@@ -51,14 +51,17 @@ Everything that differs between iasWorld counties:
 | --- | --- | --- |
 | `base_url` | `https://property.franklincountyauditor.com/_web/` | Parent of `search/` and `Datalets/`. May be a bare domain (`https://www.mcrealestate.org/`) or a path prefix (`.../lucascare/`). A trailing slash is added if missing. |
 | `district_code` | `025` (Franklin), `000` (Clermont/Montgomery) | The iasWorld `jur` query parameter. |
-| `mode_map` | `{ADDRESS: "realprop"}` | Overrides the `mode=` URL value; Summit and Lake serve a unified `realprop` search instead of `address`. |
+| `mode_map` | `{ADDRESS: "realprop"}` | Overrides the `mode=` URL value; Summit and Lake serve a unified `realprop` search instead of `address`. Lake maps **all** modes to `realprop`. |
 | `numeric_parcel_ids` | `False` (Clermont) | Default `True` compacts parcels to digits (Franklin `01000012300`); `False` preserves alphanumeric parcels (Clermont `100200C003D`, `100200.034C`). |
+| `form_field_overrides` | `{inpNumber: inpNo, inpOwner: inpOwner1}` (Lake) | Renames the POST field names submitted to the search form. Empty (default) = classic iasWorld names. Lake's unified `realprop` form uses `inpNo`/`inpOwner1` where the classic form uses `inpNumber`/`inpOwner`. |
 
 `source_id`, `county`, `state`, `name`, `owner`, and `priority` round out the
 config. New knobs are added when the first county actually needs one rather than
 speculatively — `numeric_parcel_ids` was added exactly this way when Clermont
-turned out to use alphanumeric parcels. Likely future knobs: `section_overrides`
-for datalet section-name quirks.
+turned out to use alphanumeric parcels, and `form_field_overrides` exactly this
+way when Lake's `realprop` form turned out to rename two POST fields. Likely
+future knobs: `section_overrides` / a `LAKE` `DetailProfile` for datalet
+section-name quirks (Lake's detail layout is a third variant).
 
 ## Phase 0 — platform recon (complete)
 
@@ -77,7 +80,7 @@ output).
 | Butler | `propertysearch.bcohio.gov/` | |
 | Lucas | `icare.co.lucas.oh.us/lucascare/` | branded "AREIS"; path prefix |
 | Summit | `propertyaccess.summitoh.net/` | uses `mode=realprop` |
-| Lake | `auditor.lakecountyohio.gov/` | page identifies as "iasWorld"; `mode=realprop` |
+| Lake | `auditor.lakecountyohio.gov/` | `jur=000`, **alphanumeric** parcels, unified `mode=realprop` search with renamed form fields (`inpNo`/`inpOwner1`) — **needs-verification** (search works; detail profile pending) |
 
 ### Bespoke (need their own connector — grouped by vendor)
 
@@ -116,8 +119,25 @@ variation — alphanumeric parcel IDs — which was absorbed by one shared knob
 (`numeric_parcel_ids`) that every future alphanumeric-parcel county now inherits
 for free. That is the extraction's payoff in one PR.
 
-Remaining: Montgomery, Stark, Butler, Lucas, Summit, Lake — roughly in that order.
-Each county is one PR:
+**Lake is needs-verification** — the first `realprop` county and the first to
+need a form-field change. Its page identifies as iasWorld but serves a single
+unified `realprop` Basic Search for parcel/owner/address, and that form renames
+two POST fields (`inpNumber`->`inpNo`, `inpOwner`->`inpOwner1`). Confirmed live:
+`jur=000`, alphanumeric parcels (`00A0000000001`, token `000:00A0000000002:2026`),
+and standard `tr.SearchResults` result rows the shared parser already handles. Two
+config knobs make search work — `mode_map` (every mode -> `realprop`) and the new
+`form_field_overrides` — so search and the header-derived canonical fields
+(parcel, owner, site address, token) populate. Its datalet **detail** layout,
+however, is a third variant (sections `Owner Name and Mailing Address`, `Legal
+Description Information`, `Appraised (Market - 100%) Value`, `Taxes Due`) that
+neither `CLASSIC` nor `PUBLIC_ACCESS` fully parses, so deep detail extraction
+(legal/taxes/valuation) remains a follow-up: a `LAKE` `DetailProfile`. Lake ships
+with the safe `CLASSIC` default until that lands. The `form_field_overrides`
+change is minimal and backward-compatible (no overrides = classic names; Franklin
+and Clermont are unaffected, with a focused platform test pinning both).
+
+Remaining: Montgomery, Stark, Butler, Lucas, Summit — roughly in that order; plus
+the Lake `DetailProfile` follow-up. Each county is one PR:
 
 1. Append an `IasWorldSiteConfig` to `OH_IASWORLD_SITES` in `sites.py`.
 2. Capture a real search + detail HTML **fixture** for that site.
@@ -158,8 +178,14 @@ Mirrors the four-part contract in [`AGENTS.md`](../AGENTS.md):
 
 - **Fixtures are the real Phase 2 cost.** The scraping logic is free; each county
   needs a captured search + detail page. Without one, a county stays disabled.
-- **`mode=realprop` counties** (Summit, Lake) may need form-field handling beyond
-  the URL `mode` override — verify when enabling them.
+- **`mode=realprop` counties** (Summit, Lake) need form-field handling beyond the
+  URL `mode` override — confirmed for Lake, whose `realprop` form renames two POST
+  fields, now absorbed by the `form_field_overrides` knob. Summit still needs the
+  same verification when enabled; its field names may differ again.
+- **Lake datalet detail profile.** Lake's detail layout is a third variant beyond
+  `CLASSIC`/`PUBLIC_ACCESS`; search + header fields work, but full detail
+  extraction needs a `LAKE` `DetailProfile`. Lake stays needs-verification until
+  then.
 - **One readiness gate, many counties.** `titlemcp-us-oh-auditor` publishes as one
   package; a flaky county can hold the whole release. Consider per-site readiness
   flags in the config if this bites.
