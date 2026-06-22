@@ -44,6 +44,39 @@ point:
 .venv/bin/pip install -e packages/jurisdictions/us/oh/auditor
 ```
 
+## Lucas County Auditor
+
+Parcel search:
+
+```bash
+python samples/lucas_auditor_ollama/ollama_client.py \
+  --scenario parcel \
+  --parcel-id "10-12345"
+```
+
+Address search:
+
+```bash
+python samples/lucas_auditor_ollama/ollama_client.py \
+  --scenario address \
+  --address "100 Example Ave"
+```
+
+The prompt does not name `lucas_county_auditor_search`; the sample verifies that
+the model chooses it. Lucas County's auditor site is branded AREIS and runs the
+Tyler iasWorld "Public Access" platform under a path-prefix base URL
+(`.../lucascare/`). The tool returns `title_mcp.property_assessment_record` and
+preserves the raw auditor payload under `source_specific.iasworld_auditor`.
+
+Install the shared iasWorld platform package and the Ohio auditor package in
+editable mode so the standard server can load the `title_mcp.toolsets` entry
+point:
+
+```bash
+.venv/bin/pip install -e packages/platforms/iasworld
+.venv/bin/pip install -e packages/jurisdictions/us/oh/auditor
+```
+
 ## HOA Contact Search
 
 Search by HOA name and state:
