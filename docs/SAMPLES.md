@@ -74,6 +74,36 @@ NEEDS-VERIFICATION (search + header-derived fields populate; deep detail
 extraction is a follow-up). It uses the same editable installs as the Franklin
 auditor sample above.
 
+## Summit County Auditor
+
+Parcel search:
+
+```bash
+python samples/summit_auditor_ollama/ollama_client.py \
+  --scenario parcel \
+  --parcel-id "0100111"
+```
+
+Owner search:
+
+```bash
+python samples/summit_auditor_ollama/ollama_client.py \
+  --scenario owner \
+  --owner "DOE JANE A"
+```
+
+The prompt does not name `summit_county_auditor_search`; the sample verifies that
+the model chooses it. Summit's Fiscal Office site is iasWorld Public Access and,
+like Lake, serves a single unified `realprop` search (behind a `Disclaimer.aspx`
+gate) whose form renames the same two POST fields — so it reuses the identical
+`mode_map` + `form_field_overrides` knobs (`inpNumber` -> `inpNo`, `inpOwner` ->
+`inpOwner1`), confirmed live (an `inpOwner1` owner search returns results under
+`jur=000`). The tool returns `title_mcp.property_assessment_record` and preserves
+the raw payload under `source_specific.iasworld_auditor`. Summit shares Lake's
+third-variant detail layout, so it is NEEDS-VERIFICATION (search verified; deep
+detail extraction is the shared `LAKE` `DetailProfile` follow-up). Same editable
+installs as the Franklin auditor sample above.
+
 ## HOA Contact Search
 
 Search by HOA name and state:

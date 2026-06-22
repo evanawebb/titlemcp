@@ -10,7 +10,7 @@ from pathlib import Path
 from titlemcp_us_oh_auditor.adapters import OhioCountyAuditorAdapter
 from titlemcp_us_oh_auditor.manifest import capability_manifest
 from titlemcp_us_oh_auditor.plugin import OhioAuditorPlugin
-from titlemcp_us_oh_auditor.sites import CLERMONT, FRANKLIN, LAKE, OH_IASWORLD_SITES
+from titlemcp_us_oh_auditor.sites import CLERMONT, FRANKLIN, LAKE, OH_IASWORLD_SITES, SUMMIT
 from titlemcp_us_oh_auditor.toolsets import OhioAuditorToolset
 
 from title_mcp.domain.models import Jurisdiction, WorkflowKind
@@ -78,6 +78,29 @@ class OhioAuditorContractTests(unittest.TestCase):
             self.assertEqual(
                 LAKE.search_url(mode),
                 "https://auditor.lakecountyohio.gov/search/commonsearch.aspx?mode=realprop",
+            )
+
+    def test_sites_table_includes_summit_with_realprop_overrides(self) -> None:
+        # Summit, like Lake, serves the unified "realprop" search and renames the
+        # same two POST fields. Live-verified: behind the disclaimer the form uses
+        # inpNo/inpOwner1, and an owner search via inpOwner1 returned results under
+        # jur 000. Same config knobs as Lake — no additional platform change.
+        self.assertIn(SUMMIT, OH_IASWORLD_SITES)
+        self.assertEqual(SUMMIT.source_id, "us-oh-summit-auditor")
+        self.assertEqual(SUMMIT.district_code, "000")
+        self.assertEqual(SUMMIT.tool_name, "summit_county_auditor_search")
+        self.assertFalse(SUMMIT.numeric_parcel_ids)
+        self.assertEqual(
+            SUMMIT.form_field_overrides, {"inpNumber": "inpNo", "inpOwner": "inpOwner1"}
+        )
+        for mode in (
+            AuditorSearchMode.ADDRESS,
+            AuditorSearchMode.OWNER,
+            AuditorSearchMode.PARCEL_ID,
+        ):
+            self.assertEqual(
+                SUMMIT.search_url(mode),
+                "https://propertyaccess.summitoh.net/search/commonsearch.aspx?mode=realprop",
             )
 
     def test_adapter_supports_ohio_tax_certificate(self) -> None:

@@ -15,6 +15,13 @@ server exposing `lake_county_auditor_search` (Lake County's unified iasWorld
 `realprop` search), connects to it from an Ollama client, and logs the model/tool
 exchange.
 
+## Summit County Auditor with Ollama
+
+See [summit_auditor_ollama](summit_auditor_ollama/) for a sample that starts an MCP
+server exposing `summit_county_auditor_search` (Summit County's unified iasWorld
+`realprop` search, same renamed form fields as Lake), connects to it from an Ollama
+client, and logs the model/tool exchange.
+
 ## HOA Contact Search with Ollama
 
 See [hoa_serpapi_ollama](hoa_serpapi_ollama/) for a sample that asks Ollama a

@@ -79,7 +79,7 @@ output).
 | Stark | `realestate.starkcountyohio.gov/` | `jur=000` |
 | Butler | `propertysearch.bcohio.gov/` | |
 | Lucas | `icare.co.lucas.oh.us/lucascare/` | branded "AREIS"; path prefix |
-| Summit | `propertyaccess.summitoh.net/` | uses `mode=realprop` |
+| Summit | `propertyaccess.summitoh.net/` | `jur=000`, unified `mode=realprop` search behind a `Disclaimer.aspx` gate, same renamed form fields as Lake (`inpNo`/`inpOwner1`) — **needs-verification** (search verified live; detail profile pending) |
 | Lake | `auditor.lakecountyohio.gov/` | `jur=000`, **alphanumeric** parcels, unified `mode=realprop` search with renamed form fields (`inpNo`/`inpOwner1`) — **needs-verification** (search works; detail profile pending) |
 
 ### Bespoke (need their own connector — grouped by vendor)
@@ -136,8 +136,23 @@ with the safe `CLASSIC` default until that lands. The `form_field_overrides`
 change is minimal and backward-compatible (no overrides = classic names; Franklin
 and Clermont are unaffected, with a focused platform test pinning both).
 
-Remaining: Montgomery, Stark, Butler, Lucas, Summit — roughly in that order; plus
-the Lake `DetailProfile` follow-up. Each county is one PR:
+**Summit is the second `realprop` county and validates the Lake knob.** Its
+unified search sits behind a `Disclaimer.aspx` accept gate; past it, the form uses
+the *same* renamed fields as Lake (`inpNo`/`inpOwner1`, with `inpParid`/`inpStreet`
+unchanged), confirming `form_field_overrides` is the right general fix rather than a
+Lake-specific hack. Verified live: accepting the disclaimer and posting an owner
+search via `inpOwner1` returned `tr.SearchResults` rows under `jur=000`
+(`000:0100111:2025`, numeric parcels). So Summit reuses the identical two knobs
+(`mode_map` + `form_field_overrides`) with **no further platform change**, and
+builds on the Lake PR that introduced the knob. Its detail datalet is the same
+third variant as Lake (`Appraised (Market - 100%) Value` / `Taxes Due`), so Summit
+is **search-verified but needs-verification on detail** and shares the pending
+`LAKE` `DetailProfile`. (Note: Summit's earlier config-only attempt — `mode_map`
+alone, classic field names — would have silently failed address/owner searches,
+since the form has no `inpNumber`/`inpOwner`.)
+
+Remaining: Montgomery, Stark, Butler, Lucas — roughly in that order; plus the
+shared Lake/Summit `DetailProfile` follow-up. Each county is one PR:
 
 1. Append an `IasWorldSiteConfig` to `OH_IASWORLD_SITES` in `sites.py`.
 2. Capture a real search + detail HTML **fixture** for that site.
@@ -179,13 +194,14 @@ Mirrors the four-part contract in [`AGENTS.md`](../AGENTS.md):
 - **Fixtures are the real Phase 2 cost.** The scraping logic is free; each county
   needs a captured search + detail page. Without one, a county stays disabled.
 - **`mode=realprop` counties** (Summit, Lake) need form-field handling beyond the
-  URL `mode` override — confirmed for Lake, whose `realprop` form renames two POST
-  fields, now absorbed by the `form_field_overrides` knob. Summit still needs the
-  same verification when enabled; its field names may differ again.
-- **Lake datalet detail profile.** Lake's detail layout is a third variant beyond
-  `CLASSIC`/`PUBLIC_ACCESS`; search + header fields work, but full detail
-  extraction needs a `LAKE` `DetailProfile`. Lake stays needs-verification until
-  then.
+  URL `mode` override — confirmed live for **both**: each `realprop` form renames
+  the same two POST fields (`inpNumber`->`inpNo`, `inpOwner`->`inpOwner1`), absorbed
+  by the `form_field_overrides` knob. Summit's were verified through its
+  `Disclaimer.aspx` gate (an `inpOwner1` owner search returned results), so the knob
+  generalizes rather than being Lake-specific.
+- **Lake/Summit datalet detail profile.** Both share a third detail layout beyond
+  `CLASSIC`/`PUBLIC_ACCESS`; search + header fields work, but full detail extraction
+  needs a shared `LAKE` `DetailProfile`. Both stay needs-verification until then.
 - **One readiness gate, many counties.** `titlemcp-us-oh-auditor` publishes as one
   package; a flaky county can hold the whole release. Consider per-site readiness
   flags in the config if this bites.

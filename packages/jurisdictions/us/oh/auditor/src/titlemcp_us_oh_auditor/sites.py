@@ -7,7 +7,7 @@ from titlemcp_platform_iasworld import AuditorSearchMode, DetailProfile, IasWorl
 # a sample) — the scraping/canonical logic lives in titlemcp-platform-iasworld.
 #
 # Counties confirmed on iasWorld but not yet enabled (need a captured fixture):
-# Montgomery, Stark, Butler, Lucas, Summit, Lake. See
+# Montgomery, Stark, Butler, Lucas. See
 # docs/OHIO_AUDITOR_EXPANSION.md for the rollout order and platform recon.
 
 FRANKLIN = IasWorldSiteConfig(
@@ -75,8 +75,44 @@ LAKE = IasWorldSiteConfig(
     priority=230,
 )
 
+# Summit County (Fiscal Office) runs iasWorld Public Access and, like Lake, serves
+# a single unified "realprop" search (no separate per-mode pages) whose form
+# renames two POST fields. All confirmed against live data: behind the
+# Disclaimer.aspx gate the realprop form fields are inpNo (address number, classic
+# inpNumber) and inpOwner1 (owner, classic inpOwner) while inpParid/inpStreet are
+# unchanged, and a live owner search via inpOwner1 returned tr.SearchResults rows
+# with jur "000" parcel tokens ("000:0100111:2025", numeric parcels). So the same
+# two knobs as Lake apply — mode_map routes every mode to realprop, and
+# form_field_overrides renames inpNumber->inpNo / inpOwner->inpOwner1 (the shared
+# platform knob introduced with Lake). numeric_parcel_ids=False keeps the
+# alphanumeric-safe superset even though the sampled parcels were numeric.
+# Its datalet detail page is the same THIRD layout variant as Lake (Appraised
+# (Market - 100%) Value / Taxes Due sections) that neither CLASSIC nor
+# PUBLIC_ACCESS fully parses, so search + header-derived canonical fields populate
+# but deep detail extraction is the same LAKE-DetailProfile follow-up. Summit is
+# therefore SEARCH-VERIFIED but NEEDS-VERIFICATION on detail; CLASSIC (the default)
+# is the safe layout until that profile lands.
+SUMMIT = IasWorldSiteConfig(
+    source_id="us-oh-summit-auditor",
+    county="Summit County",
+    state="OH",
+    name="Summit County, Ohio Fiscal Office Property Search",
+    base_url="https://propertyaccess.summitoh.net/",
+    district_code="000",
+    numeric_parcel_ids=False,
+    mode_map={
+        AuditorSearchMode.ADDRESS: "realprop",
+        AuditorSearchMode.OWNER: "realprop",
+        AuditorSearchMode.PARCEL_ID: "realprop",
+    },
+    form_field_overrides={"inpNumber": "inpNo", "inpOwner": "inpOwner1"},
+    owner="Summit County Fiscal Office",
+    priority=230,
+)
+
 OH_IASWORLD_SITES: list[IasWorldSiteConfig] = [
     FRANKLIN,
     CLERMONT,
     LAKE,
+    SUMMIT,
 ]
