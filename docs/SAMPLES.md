@@ -44,6 +44,33 @@ point:
 .venv/bin/pip install -e packages/jurisdictions/us/oh/auditor
 ```
 
+## Butler County Auditor
+
+Parcel search:
+
+```bash
+python samples/butler_auditor_ollama/ollama_client.py \
+  --scenario parcel \
+  --parcel-id "A0000001"
+```
+
+Address search:
+
+```bash
+python samples/butler_auditor_ollama/ollama_client.py \
+  --scenario address \
+  --address "100 Example Ave"
+```
+
+The prompt does not name `butler_county_auditor_search`; the sample verifies
+that the model chooses it. Butler runs the same shared iasWorld platform as
+Franklin (config entry only), so the tool returns
+`title_mcp.property_assessment_record` and preserves the raw auditor payload
+under `source_specific.iasworld_auditor`. Its parcels are alphanumeric
+(`A0000001`). Install the shared iasWorld platform package and the Ohio auditor
+package in editable mode (as shown above) so the standard server can load the
+tool.
+
 ## HOA Contact Search
 
 Search by HOA name and state:
