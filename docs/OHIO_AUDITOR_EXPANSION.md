@@ -123,7 +123,7 @@ for free. That is the extraction's payoff in one PR.
 need a form-field change. Its page identifies as iasWorld but serves a single
 unified `realprop` Basic Search for parcel/owner/address, and that form renames
 two POST fields (`inpNumber`->`inpNo`, `inpOwner`->`inpOwner1`). Confirmed live:
-`jur=000`, alphanumeric parcels (`16A0010000010`, token `000:02A0010000050:2026`),
+`jur=000`, alphanumeric parcels (`00A0000000001`, token `000:00A0000000002:2026`),
 and standard `tr.SearchResults` result rows the shared parser already handles. Two
 config knobs make search work — `mode_map` (every mode -> `realprop`) and the new
 `form_field_overrides` — so search and the header-derived canonical fields
@@ -142,7 +142,7 @@ the *same* renamed fields as Lake (`inpNo`/`inpOwner1`, with `inpParid`/`inpStre
 unchanged), confirming `form_field_overrides` is the right general fix rather than a
 Lake-specific hack. Verified live: accepting the disclaimer and posting an owner
 search via `inpOwner1` returned `tr.SearchResults` rows under `jur=000`
-(`000:0100111:2025`, numeric parcels). So Summit reuses the identical two knobs
+(`000:0100000:2025`, numeric parcels). So Summit reuses the identical two knobs
 (`mode_map` + `form_field_overrides`) with **no further platform change**, and
 builds on the Lake PR that introduced the knob. Its detail datalet is the same
 third variant as Lake (`Appraised (Market - 100%) Value` / `Taxes Due`), so Summit

@@ -85,7 +85,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--parcel-id",
-        default="02A0010000050",
+        default="00A0000000002",
         help="Lake County parcel ID for the parcel scenario",
     )
     parser.add_argument(

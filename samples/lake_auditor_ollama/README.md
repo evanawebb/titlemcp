@@ -52,7 +52,7 @@ a parcel. To search a different parcel:
 ```bash
 python samples/lake_auditor_ollama/ollama_client.py \
   --model qwen3 \
-  --parcel-id 02A0010000050
+  --parcel-id 00A0000000002
 ```
 
 You can also test address or owner prompts:

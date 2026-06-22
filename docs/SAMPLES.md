@@ -51,7 +51,7 @@ Parcel search:
 ```bash
 python samples/lake_auditor_ollama/ollama_client.py \
   --scenario parcel \
-  --parcel-id "02A0010000050"
+  --parcel-id "00A0000000002"
 ```
 
 Address search:
@@ -81,7 +81,7 @@ Parcel search:
 ```bash
 python samples/summit_auditor_ollama/ollama_client.py \
   --scenario parcel \
-  --parcel-id "0100111"
+  --parcel-id "0100000"
 ```
 
 Owner search:

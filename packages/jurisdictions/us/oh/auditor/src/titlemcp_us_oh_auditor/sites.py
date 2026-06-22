@@ -42,7 +42,7 @@ CLERMONT = IasWorldSiteConfig(
 # Lake County's auditor site runs iasWorld (the page identifies as iasWorld) but
 # serves a single unified "realprop" Basic Search form for parcel, owner, AND
 # address — there is no separate address/owner search page. Verified live: jur
-# "000", alphanumeric parcels ("16A0010000010", token "000:02A0010000050:2026"),
+# "000", alphanumeric parcels ("00A0000000001", token "000:00A0000000002:2026"),
 # and the standard tr.SearchResults / parcel-token result rows the shared parser
 # already handles. Two knobs make it work:
 #   - mode_map routes every search mode to the realprop URL, and
@@ -81,7 +81,7 @@ LAKE = IasWorldSiteConfig(
 # Disclaimer.aspx gate the realprop form fields are inpNo (address number, classic
 # inpNumber) and inpOwner1 (owner, classic inpOwner) while inpParid/inpStreet are
 # unchanged, and a live owner search via inpOwner1 returned tr.SearchResults rows
-# with jur "000" parcel tokens ("000:0100111:2025", numeric parcels). So the same
+# with jur "000" parcel tokens ("000:0100000:2025", numeric parcels). So the same
 # two knobs as Lake apply — mode_map routes every mode to realprop, and
 # form_field_overrides renames inpNumber->inpNo / inpOwner->inpOwner1 (the shared
 # platform knob introduced with Lake). numeric_parcel_ids=False keeps the

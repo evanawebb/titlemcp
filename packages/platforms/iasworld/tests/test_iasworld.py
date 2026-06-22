@@ -178,8 +178,8 @@ class IasWorldFormFieldOverrideTests(unittest.TestCase):
 
         # Parcel field is shared and never renamed.
         self.assertEqual(
-            client._apply_field_overrides({"inpParid": "02A0010000050"}),
-            {"inpParid": "02A0010000050"},
+            client._apply_field_overrides({"inpParid": "00A0000000002"}),
+            {"inpParid": "00A0000000002"},
         )
 
     def test_classic_counties_keep_field_names(self) -> None:
@@ -215,8 +215,8 @@ LAKE_SEARCH_HTML = """
 <table id="searchResults">
   <tr class="SearchResults"
       onclick="javascript:selectSearchRow('../Datalets/Datalet.aspx?sIndex=0&idx=1')">
-    <td><input name="chkPin" value="000:02A0010000050:2026"></td>
-    <td><div>02A0010000050</div></td>
+    <td><input name="chkPin" value="000:00A0000000002:2026"></td>
+    <td><div>00A0000000002</div></td>
     <td><div>100 EXAMPLE ST</div></td>
     <td><div>DOE JANE A</div></td>
     <td><div>EXAMPLE SUBDIVISION LOT 1</div></td>
