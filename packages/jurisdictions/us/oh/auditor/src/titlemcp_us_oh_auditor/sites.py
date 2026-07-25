@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from titlemcp_platform_iasworld import DetailProfile, IasWorldSiteConfig
+from titlemcp_platform_iasworld import AuditorSearchMode, DetailProfile, IasWorldSiteConfig
 
 # The table of Ohio county auditor sites that run the Tyler iasWorld platform.
 # Adding a county is a config entry here (plus a fixture-backed contract test and
 # a sample) — the scraping/canonical logic lives in titlemcp-platform-iasworld.
 #
 # Counties confirmed on iasWorld but not yet enabled (need a captured fixture):
-# Stark, Butler, Summit, Lake. See
+# Summit. See
 # docs/OHIO_AUDITOR_EXPANSION.md for the rollout order and platform recon.
 
 FRANKLIN = IasWorldSiteConfig(
@@ -83,9 +83,49 @@ LUCAS = IasWorldSiteConfig(
     priority=230,
 )
 
+# Stark serves iasWorld from a bare domain (https://realestate.starkcountyohio.gov/,
+# no "/_web/" prefix) like Montgomery, behind a one-time "Agree" disclaimer page.
+# Every knob below was verified against the live site (an owner search returned
+# result rows and a reachable datalet):
+#   * mode_map -> "realprop" for ALL THREE modes. Stark does NOT serve the classic
+#     mode=parid / mode=address searches at all — both redirect to
+#     /main/accesserror.aspx even with an accepted disclaimer session. It exposes a
+#     single unified "Basic Search" form (mode=realprop) carrying parcel, owner,
+#     address-number and street fields together, so every mode routes there. (A
+#     dedicated mode=owner page also exists, but routing owner through realprop too
+#     keeps one form — and one set of field names — for the whole county.)
+#   * form_field_overrides: the realprop form names its inputs inpNo/inpOwner1
+#     rather than the classic inpNumber/inpOwner — the same shape as Lake.
+#   * district_code="000": read from the datalet's hdJur hidden input (confirming
+#     the recon guess), not assumed from the regional default.
+#   * numeric_parcel_ids: parcels are purely numeric ("10000006", "1000049"), so
+#     the default True is correct and is kept deliberately, not by omission.
+#   * detail_profile=PUBLIC_ACCESS: the datalet uses the numbered split-section
+#     layout ("Owner 1", "Address 1", "Mailing Name 1", "Legal Desc 1") with no
+#     combined "Owner"/"Prior Owner" CLASSIC labels. The CLASSIC default would
+#     have been WRONG here.
+STARK = IasWorldSiteConfig(
+    source_id="us-oh-stark-auditor",
+    county="Stark County",
+    state="OH",
+    name="Stark County, Ohio Auditor Property Search",
+    base_url="https://realestate.starkcountyohio.gov/",
+    district_code="000",
+    mode_map={
+        AuditorSearchMode.ADDRESS: "realprop",
+        AuditorSearchMode.OWNER: "realprop",
+        AuditorSearchMode.PARCEL_ID: "realprop",
+    },
+    form_field_overrides={"inpNumber": "inpNo", "inpOwner": "inpOwner1"},
+    detail_profile=DetailProfile.PUBLIC_ACCESS,
+    owner="Stark County Auditor",
+    priority=230,
+)
+
 OH_IASWORLD_SITES: list[IasWorldSiteConfig] = [
     FRANKLIN,
     CLERMONT,
     MONTGOMERY,
     LUCAS,
+    STARK,
 ]

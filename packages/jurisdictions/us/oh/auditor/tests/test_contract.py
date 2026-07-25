@@ -10,7 +10,14 @@ from pathlib import Path
 from titlemcp_us_oh_auditor.adapters import OhioCountyAuditorAdapter
 from titlemcp_us_oh_auditor.manifest import capability_manifest
 from titlemcp_us_oh_auditor.plugin import OhioAuditorPlugin
-from titlemcp_us_oh_auditor.sites import CLERMONT, FRANKLIN, LUCAS, MONTGOMERY, OH_IASWORLD_SITES
+from titlemcp_us_oh_auditor.sites import (
+    CLERMONT,
+    FRANKLIN,
+    LUCAS,
+    MONTGOMERY,
+    OH_IASWORLD_SITES,
+    STARK,
+)
 from titlemcp_us_oh_auditor.toolsets import OhioAuditorToolset
 
 from title_mcp.domain.models import Jurisdiction, WorkflowKind
@@ -18,6 +25,8 @@ from title_mcp.sources import SourceKind, SourceQuery, SourceResultStatus
 from title_mcp.sources.registry import SourceConnectorRegistry
 from titlemcp_platform_iasworld import (
     AuditorSearchMode,
+    DetailProfile,
+    IasWorldAuditorClient,
     IasWorldAuditorParcelDetail,
     IasWorldAuditorSearchHit,
     IasWorldAuditorSearchQuery,
@@ -67,6 +76,7 @@ class OhioAuditorContractTests(unittest.TestCase):
         self.assertFalse(MONTGOMERY.numeric_parcel_ids)
         self.assertTrue(MONTGOMERY.preserve_parcel_whitespace)
         self.assertEqual(MONTGOMERY.tool_name, "montgomery_county_auditor_search")
+
     def test_sites_table_includes_lucas_with_path_prefix_base_url(self) -> None:
         # Lucas (AREIS branding) is another config-only county. Its base_url is a
         # path prefix (.../lucascare/) rather than a bare domain or /_web/ stack;
@@ -81,6 +91,117 @@ class OhioAuditorContractTests(unittest.TestCase):
             LUCAS.search_url(AuditorSearchMode.PARCEL_ID),
             "https://icare.co.lucas.oh.us/lucascare/search/commonsearch.aspx?mode=parid",
         )
+
+    def test_sites_table_includes_stark_with_realprop_only_search(self) -> None:
+        # Stark is a bare-domain base_url like Montgomery, but it does NOT serve
+        # the classic mode=parid / mode=address searches at all (both redirect to
+        # /main/accesserror.aspx). Everything routes through its unified
+        # "realprop" Basic Search form, whose inputs are named inpNo/inpOwner1.
+        # All verified against the live site.
+        self.assertIn(STARK, OH_IASWORLD_SITES)
+        self.assertEqual(STARK.source_id, "us-oh-stark-auditor")
+        self.assertEqual(STARK.district_code, "000")
+        self.assertEqual(STARK.base_url, "https://realestate.starkcountyohio.gov/")
+        self.assertEqual(STARK.tool_name, "stark_county_auditor_search")
+        # Parcels are numeric ("99000001"), so the default is kept deliberately.
+        self.assertTrue(STARK.numeric_parcel_ids)
+        self.assertFalse(STARK.preserve_parcel_whitespace)
+        # The datalet uses the numbered Public Access layout, not CLASSIC.
+        self.assertEqual(STARK.detail_profile, DetailProfile.PUBLIC_ACCESS)
+        for mode in AuditorSearchMode:
+            self.assertEqual(
+                STARK.search_url(mode),
+                "https://realestate.starkcountyohio.gov/search/commonsearch.aspx?mode=realprop",
+            )
+
+    def test_stark_search_form_uses_realprop_field_names(self) -> None:
+        # The unified realprop form renames the address-number and owner inputs.
+        client = IasWorldAuditorClient(STARK)
+
+        self.assertEqual(
+            client._apply_field_overrides({"inpNumber": "100", "inpStreet": "EXAMPLE"}),
+            {"inpNo": "100", "inpStreet": "EXAMPLE"},
+        )
+        self.assertEqual(
+            client._apply_field_overrides({"inpOwner": "DOE JANE A"}),
+            {"inpOwner1": "DOE JANE A"},
+        )
+        # The parcel field is shared across iasWorld forms and is never renamed.
+        self.assertEqual(
+            client._apply_field_overrides({"inpParid": "99000001"}),
+            {"inpParid": "99000001"},
+        )
+
+    def test_stark_fixtures_parse_into_canonical_record(self) -> None:
+        # Fixture-backed end-to-end parse: synthetic realprop results grid plus a
+        # synthetic Public Access datalet, served through a fake opener.
+        client = IasWorldAuditorClient(STARK, opener=_StarkFixtureOpener())
+        connector = build_auditor_source_connector(STARK, client=client)
+
+        result = asyncio.run(
+            connector.query(
+                SourceQuery(
+                    jurisdiction=STARK.jurisdiction,
+                    kind=SourceKind.TAX_AUTHORITY,
+                    criteria={"mode": "owner", "owner_name": "DOE JANE A"},
+                )
+            )
+        )
+
+        self.assertEqual(result.status, SourceResultStatus.SUCCEEDED)
+        self.assertTrue(result.requires_human_review)
+        record = result.records[0]
+        self.assertEqual(record["schema_name"], "title_mcp.property_assessment_record")
+        self.assertEqual(record["source"]["source_id"], "us-oh-stark-auditor")
+        self.assertEqual(record["jurisdiction"]["county"], "Stark County")
+        # jur=000 comes from the datalet's hdJur input, not from a guess.
+        self.assertEqual(record["parcel"]["tax_authority_jurisdiction"], "000")
+        self.assertEqual(record["parcel"]["parcel_number"], "99000001")
+        # Numbered "Owner 1" label resolves only under the PUBLIC_ACCESS profile.
+        self.assertEqual(record["ownership"]["owners"], ["DOE JANE A"])
+        self.assertEqual(record["property"]["property_class"], "R - RESIDENTIAL")
+        self.assertEqual(
+            record["property"]["legal_description_lines"][0],
+            "EXAMPLE SUBDIVISION LOT 1",
+        )
+
+    def test_stark_owner_search_posts_realprop_field_names(self) -> None:
+        # Proves the rename reaches the wire rather than only the helper.
+        opener = _StarkFixtureOpener()
+        client = IasWorldAuditorClient(STARK, opener=opener)
+
+        client.search(
+            IasWorldAuditorSearchQuery(
+                mode=AuditorSearchMode.OWNER,
+                owner_name="DOE JANE A",
+                include_details=False,
+            )
+        )
+
+        self.assertTrue(opener.post_bodies, "expected at least one POST")
+        self.assertIn("inpOwner1=", opener.post_bodies[0])
+        self.assertNotIn("inpOwner=", opener.post_bodies[0])
+
+    def test_stark_empty_results_report_no_records(self) -> None:
+        # Missing/empty path: a results page with no rows must not raise.
+        client = IasWorldAuditorClient(STARK, opener=_StarkFixtureOpener(search_html="<table></table>"))
+        connector = build_auditor_source_connector(STARK, client=client)
+
+        result = asyncio.run(
+            connector.query(
+                SourceQuery(
+                    jurisdiction=STARK.jurisdiction,
+                    kind=SourceKind.TAX_AUTHORITY,
+                    criteria={"mode": "owner", "owner_name": "NOBODY MATCHES THIS"},
+                )
+            )
+        )
+
+        self.assertIn(
+            result.status,
+            {SourceResultStatus.SUCCEEDED, SourceResultStatus.NO_RESULTS},
+        )
+        self.assertFalse(result.records)
 
     def test_adapter_supports_ohio_tax_certificate(self) -> None:
         adapter = OhioCountyAuditorAdapter()
@@ -155,6 +276,53 @@ class OhioAuditorContractTests(unittest.TestCase):
 
         self.assertEqual(result.status, SourceResultStatus.FAILED)
         self.assertTrue(result.warnings)
+
+
+FIXTURES = Path(__file__).resolve().parent / "fixtures"
+
+
+class _FixtureResponse:
+    def __init__(self, body: str, url: str) -> None:
+        self._body = body.encode("utf-8")
+        self._url = url
+
+    def read(self) -> bytes:
+        return self._body
+
+    def geturl(self) -> str:
+        return self._url
+
+    def __enter__(self) -> _FixtureResponse:
+        return self
+
+    def __exit__(self, *exc: object) -> None:
+        return None
+
+
+class _StarkFixtureOpener:
+    """Serves the synthetic Stark fixtures instead of touching the network.
+
+    GETs of ``Datalets/`` return the datalet fixture, any other GET returns an
+    empty search form, and POSTs (the search submission) return the results
+    fixture while recording the encoded body.
+    """
+
+    def __init__(self, search_html: str | None = None) -> None:
+        if search_html is None:
+            search_html = (FIXTURES / "stark_search_results.html").read_text(encoding="utf-8")
+        self._search_html = search_html
+        self._detail_html = (FIXTURES / "stark_datalet.html").read_text(encoding="utf-8")
+        self.post_bodies: list[str] = []
+
+    def open(self, request: object, timeout: float | None = None) -> _FixtureResponse:
+        url = getattr(request, "full_url", "https://realestate.starkcountyohio.gov/")
+        data = getattr(request, "data", None)
+        if data is None:
+            if "Datalet" in url:
+                return _FixtureResponse(self._detail_html, url)
+            return _FixtureResponse("<form></form>", url)
+        self.post_bodies.append(data.decode("utf-8"))
+        return _FixtureResponse(self._search_html, url)
 
 
 class _FakeClient:

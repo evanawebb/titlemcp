@@ -51,7 +51,9 @@ Everything that differs between iasWorld counties:
 | --- | --- | --- |
 | `base_url` | `https://property.franklincountyauditor.com/_web/` | Parent of `search/` and `Datalets/`. May be a bare domain (`https://www.mcrealestate.org/`) or a path prefix (`.../lucascare/`). A trailing slash is added if missing. |
 | `district_code` | `025` (Franklin), `000` (Clermont/Montgomery) | The iasWorld `jur` query parameter. |
-| `mode_map` | `{ADDRESS: "realprop"}` | Overrides the `mode=` URL value; Summit and Lake serve a unified `realprop` search instead of `address`. |
+| `mode_map` | `{ADDRESS: "realprop"}` | Overrides the `mode=` URL value; Summit and Lake serve a unified `realprop` search instead of `address`, and Stark maps *all three* modes to it (it serves no `parid`/`address` search at all). |
+| `form_field_overrides` | `{"inpNumber": "inpNo"}` | Renames POST field names. The unified `realprop` form (Lake, Stark) uses `inpNo`/`inpOwner1` instead of `inpNumber`/`inpOwner`. |
+| `detail_profile` | `PUBLIC_ACCESS` (Clermont, Stark) | Which datalet layout the county serves. `CLASSIC` is the default combined-`Owner` layout; `PUBLIC_ACCESS` is the numbered `Owner 1`/`Address 1` split-section layout. **Always confirm against a live datalet** — a wrong default here silently drops ownership data. |
 | `numeric_parcel_ids` | `False` (Clermont) | Default `True` compacts parcels to digits (Franklin `01000012300`); `False` preserves alphanumeric parcels (Clermont `100200C003D`, `100200.034C`). |
 
 `source_id`, `county`, `state`, `name`, `owner`, and `priority` round out the
@@ -73,7 +75,7 @@ output).
 | Franklin | `property.franklincountyauditor.com/_web/` | `jur=025`, numeric parcels — **enabled** |
 | Clermont | `clermontauditorrealestate.org/_web/` | `jur=000`, **alphanumeric** parcels — **enabled** |
 | Montgomery | `www.mcrealestate.org/` | `jur=000`, no `/_web/` prefix, **alphanumeric** parcels, CLASSIC detail (all verified live) — **enabled** |
-| Stark | `realestate.starkcountyohio.gov/` | `jur=000` |
+| Stark | `realestate.starkcountyohio.gov/` | `jur=000` (verified live), numeric parcels, **PUBLIC_ACCESS** detail, unified `mode=realprop` only, `inpNo`/`inpOwner1` fields, disclaimer gate — **enabled** |
 | Butler | `propertysearch.bcohio.gov/` | |
 | Lucas | `icare.co.lucas.oh.us/lucascare/` | branded "AREIS"; path prefix; `jur=048` (verified live), numeric parcels, CLASSIC detail — **enabled** |
 | Summit | `propertyaccess.summitoh.net/` | uses `mode=realprop` |
@@ -124,7 +126,6 @@ alphanumeric parcels were confirmed against the live site; the datalet detail
 profile could not be inspected live (maintenance / bot protection) so it keeps
 the safe `detail_profile=CLASSIC` default pending live confirmation.
 
-Remaining: Stark, Butler, Lucas, Summit, Lake — roughly in that order.
 **Lucas is enabled** as the first AREIS-branded, path-prefix base-URL county
 (`.../lucascare/`), confirming the platform layer handles a non-`/_web/` base. All
 knobs were re-verified against the live site (an owner search returned result rows
@@ -134,8 +135,28 @@ regional default — so `district_code="048"`; parcels are numeric (`0100000`), 
 combined-Owner `CLASSIC` layout (labels `Owner`/`Prior Owner`, not the numbered
 Public Access sections), so `detail_profile` stays `CLASSIC`.
 
-Remaining: Montgomery, Stark, Butler, Summit, Lake — roughly in that order.
-Each county is one PR:
+**Stark is enabled** as the fifth county and the first that does not serve the
+classic per-mode searches at all: both `mode=parid` and `mode=address` redirect to
+`/main/accesserror.aspx`, even with an accepted session. Stark exposes a single
+unified "Basic Search" (`mode=realprop`) carrying parcel, owner, address-number
+and street fields together, so all three modes route there via `mode_map`, and the
+form's `inpNo`/`inpOwner1` inputs are handled by the existing
+`form_field_overrides` knob — the same shape Lake needs. Every knob was verified
+against the live site (an owner search returned result rows with a reachable
+datalet): `jur=000` was read from the datalet's `hdJur` input rather than assumed
+from the regional default; parcels are numeric (`10000006`), so
+`numeric_parcel_ids` keeps its `True` default deliberately; and the datalet uses
+the numbered **`PUBLIC_ACCESS`** layout (`Owner 1`, `Address 1`, `Legal Desc 1`),
+so the `CLASSIC` default would have been wrong.
+
+Stark also forced the one shared-platform change in that PR: the site gates every
+page behind a `Search/Disclaimer.aspx` interstitial until an "Agree" postback sets
+a session cookie. Without handling it the client harvested the disclaimer's
+ViewState and posted it to `commonsearch.aspx`, which answers HTTP 500. The client
+now accepts the disclaimer once and retries the original URL; counties without an
+interstitial never reach that path.
+
+Remaining: Summit. Each county is one PR:
 
 1. Append an `IasWorldSiteConfig` to `OH_IASWORLD_SITES` in `sites.py`.
 2. Capture a real search + detail HTML **fixture** for that site.

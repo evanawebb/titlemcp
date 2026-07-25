@@ -1,0 +1,70 @@
+<!--
+  SYNTHETIC Stark County iasWorld Datalet.aspx detail page.
+
+  Structure mirrors the live Stark datalet, which uses the "Public Access"
+  split-section layout: separate Parcel / Owner / Tax Mailing Name and Address /
+  Legal sections with NUMBERED labels ("Owner 1", "Mailing Name 1",
+  "Address 1", "Legal Desc 1") and no combined "Owner"/"Prior Owner" CLASSIC
+  labels. The hdJur hidden input carries the jur code (000).
+
+  Every owner name, parcel number and address below is INVENTED. No real Stark
+  County property record is committed to this repository.
+-->
+<input name="hdPin" type="hidden" id="hdPin" value="99000001" />
+<input name="hdJur" type="hidden" id="hdJur" value="000" />
+<input name="hdTaxYear" type="hidden" id="hdTaxYear" value="2026" />
+
+<table width="100%" border="0" cellspacing="0" cellpadding="0">
+  <tr class="DataletHeaderTop" height="1">
+    <td class="DataletHeaderTop" width="50%" align="left" colspan="2" nowrap="1">Parcel: 99000001</td>
+  </tr>
+  <tr class="DataletHeaderBottom" height="1">
+    <td class="DataletHeaderBottom" width="50%" align="left" colspan="2">DOE JANE A</td>
+    <td class="DataletHeaderBottom" width="50%" align="right" colspan="2">100 EXAMPLE AVE NE </td>
+  </tr>
+</table>
+
+<div id='datalet_div_1' name='PARCEL'>
+  <table align=center width='100%'><tr><td colspan=2 class="DataletTitleColor"><font size=-1>Parcel</font></td></tr></table>
+  <table id='Parcel' align=center width='100%' border='0' cellPadding=1 cellSpacing=0>
+    <tr><td width='40%' class="DataletSideHeading">Address</td><td class="DataletData">100   EXAMPLE AVE NE</td></tr>
+    <tr><td width='40%' class="DataletSideHeading">Unit</td><td class="DataletData">&nbsp;</td></tr>
+    <tr><td width='40%' class="DataletSideHeading">City, State, Zip</td><td class="DataletData">CANTON OH 44700-0001</td></tr>
+    <tr><td width='40%' class="DataletSideHeading">Routing Number</td><td class="DataletData">99000SW000100</td></tr>
+    <tr><td width='40%' class="DataletSideHeading">Class</td><td class="DataletData">R - RESIDENTIAL</td></tr>
+    <tr><td width='40%' class="DataletSideHeading">Land Use Code</td><td class="DataletData">510 - R - 1-FAMILY DWELLING</td></tr>
+    <tr><td width='40%' class="DataletSideHeading">Tax Roll</td><td class="DataletData">RP_OH</td></tr>
+    <tr><td width='40%' class="DataletSideHeading">Neighborhood</td><td class="DataletData">RS99999 - EXAMPLE TOWNSHIP 1</td></tr>
+    <tr><td width='40%' class="DataletSideHeading">Acres</td><td class="DataletData">1.50</td></tr>
+  </table>
+</div>
+
+<div id='datalet_div_3' name='OWNER'>
+  <table align=center width='100%'><tr><td colspan=2 class="DataletTitleColor"><font size=-1>Owner</font></td></tr></table>
+  <table id='Owner' align=center width='100%' border='0' cellPadding=1 cellSpacing=0>
+    <tr><td width='40%' class="DataletSideHeading">Owner 1</td><td class="DataletData">DOE JANE A</td></tr>
+    <tr><td width='40%' class="DataletSideHeading">&nbsp;</td><td class="DataletData">&nbsp;</td></tr>
+    <tr><td width='40%' class="DataletSideHeading">Address</td><td class="DataletData">100 EXAMPLE AVE NE</td></tr>
+    <tr><td width='40%' class="DataletSideHeading">&nbsp;</td><td class="DataletData">CANTON OH 44700</td></tr>
+  </table>
+</div>
+
+<div id='datalet_div_5' name='MAILADD3'>
+  <table align=center width='100%'><tr><td colspan=2 class="DataletTitleColor"><font size=-1>Tax Mailing Name and Address</font></td></tr></table>
+  <table id='Tax Mailing Name and Address' align=center width='100%' border='0' cellPadding=1 cellSpacing=0>
+    <tr><td width='40%' class="DataletSideHeading">Mailing Name 1</td><td class="DataletData">DOE JANE A</td></tr>
+    <tr><td width='40%' class="DataletSideHeading">Mailing Name 2</td><td class="DataletData">&nbsp;</td></tr>
+    <tr><td width='40%' class="DataletSideHeading">Address 1</td><td class="DataletData">100 EXAMPLE AVE NE</td></tr>
+    <tr><td width='40%' class="DataletSideHeading">Address 2</td><td class="DataletData">CANTON OH 44700</td></tr>
+    <tr><td width='40%' class="DataletSideHeading">Address 3</td><td class="DataletData">&nbsp;</td></tr>
+  </table>
+</div>
+
+<div id='datalet_div_7' name='LEGAL'>
+  <table align=center width='100%'><tr><td colspan=2 class="DataletTitleColor"><font size=-1>Legal</font></td></tr></table>
+  <table id='Legal' align=center width='100%' border='0' cellPadding=1 cellSpacing=0>
+    <tr><td width='40%' class="DataletSideHeading">Legal Desc 1</td><td class="DataletData">EXAMPLE SUBDIVISION LOT 1</td></tr>
+    <tr><td width='40%' class="DataletSideHeading">Legal Desc 2</td><td class="DataletData">1.50A</td></tr>
+    <tr><td width='40%' class="DataletSideHeading">Legal Desc 3</td><td class="DataletData">&nbsp;</td></tr>
+  </table>
+</div>

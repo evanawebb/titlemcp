@@ -348,6 +348,72 @@ class _CaptureOpener:
         return _CaptureResponse(self._search_html, url)
 
 
+DISCLAIMER_HTML = """
+<form name="Form1" method="post" action="./Disclaimer.aspx" id="Form1">
+  <input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="DISCLAIMER-VIEWSTATE" />
+  <button type="submit" id="btDisagree" name="btDisagree">Disagree</button>
+  <button type="submit" id="btAgree" name="btAgree">Agree</button>
+</form>
+"""
+
+TARGET_HTML = "<form><input type='hidden' name='__VIEWSTATE' value='REAL-VIEWSTATE'></form>"
+
+
+class _DisclaimerOpener:
+    """Redirects the first GET to Disclaimer.aspx until btAgree is posted."""
+
+    def __init__(self) -> None:
+        self.agreed = False
+        self.requests: list[tuple[str, str | None]] = []
+
+    def open(self, request: object, timeout: float | None = None) -> _CaptureResponse:
+        url = getattr(request, "full_url", "")
+        data = getattr(request, "data", None)
+        body = data.decode("utf-8") if data else None
+        self.requests.append((url, body))
+        if body is not None and "Disclaimer.aspx" in url:
+            self.agreed = True
+            return _CaptureResponse(TARGET_HTML, url)
+        if not self.agreed:
+            # Server-side redirect to the interstitial.
+            return _CaptureResponse(
+                DISCLAIMER_HTML,
+                "https://realestate.example.gov/Search/Disclaimer.aspx?FromUrl=..",
+            )
+        return _CaptureResponse(TARGET_HTML, url)
+
+
+class IasWorldDisclaimerTests(unittest.TestCase):
+    def test_get_accepts_disclaimer_and_retries_target(self) -> None:
+        # Stark gates every page behind Disclaimer.aspx; the client must agree
+        # once and then re-request what the caller actually asked for.
+        opener = _DisclaimerOpener()
+        client = IasWorldAuditorClient(FRANKLIN, opener=opener)
+
+        html, final_url = client._get("https://realestate.example.gov/search/commonsearch.aspx")
+
+        self.assertTrue(opener.agreed)
+        self.assertIn("REAL-VIEWSTATE", html)
+        self.assertNotIn("DISCLAIMER-VIEWSTATE", html)
+        self.assertEqual(final_url, "https://realestate.example.gov/search/commonsearch.aspx")
+
+        agree_posts = [body for url, body in opener.requests if body and "Disclaimer" in url]
+        self.assertEqual(len(agree_posts), 1)
+        # The disclaimer's own ViewState is echoed back, and only btAgree is sent.
+        self.assertIn("btAgree=Agree", agree_posts[0])
+        self.assertIn("DISCLAIMER-VIEWSTATE", agree_posts[0])
+        self.assertNotIn("btDisagree", agree_posts[0])
+
+    def test_get_without_disclaimer_makes_a_single_request(self) -> None:
+        # Regression guard: counties with no interstitial are untouched.
+        opener = _CaptureOpener(TARGET_HTML)
+        client = IasWorldAuditorClient(FRANKLIN, opener=opener)
+
+        client._get("https://property.franklincountyauditor.com/_web/search/commonsearch.aspx")
+
+        self.assertEqual(opener.post_bodies, [])
+
+
 class IasWorldCanonicalTests(unittest.TestCase):
     def test_source_connector_maps_to_canonical_record(self) -> None:
         connector = build_auditor_source_connector(FRANKLIN, client=_FakeClient())

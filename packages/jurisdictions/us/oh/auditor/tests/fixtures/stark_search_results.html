@@ -1,0 +1,43 @@
+<!--
+  SYNTHETIC Stark County iasWorld "realprop" search-results fragment.
+
+  Structure mirrors the live https://realestate.starkcountyohio.gov/ unified
+  Basic Search (mode=realprop) result grid, but every owner name, parcel number
+  and address below is INVENTED. No real Stark County property record is
+  committed to this repository.
+-->
+<table id="searchResults">
+  <!--
+    Stark orders its columns Parcel # / Owner / Parcel Address — Owner BEFORE
+    Address, the reverse of Franklin. The <thead> is what lets the shared client
+    detect the column roles instead of assuming Franklin's order, so it is part
+    of the fixture on purpose.
+  -->
+  <thead>
+    <tr height="23">
+      <th scope='col' class='ResultListTitleColor'><div>Parcel #&#9650</div></th>
+      <th scope='col' class='ResultListTitleColor'><div>Owner</div></th>
+      <th scope='col' class='ResultListTitleColor'><div>Parcel Address</div></th>
+      <th scope='col' class='ResultListTitleColor'><div>Class</div></th>
+      <th scope='col' class='ResultListTitleColor'><div>Land Use</div></th>
+    </tr>
+  </thead>
+  <tr class="SearchResults"
+      onclick="javascript:selectSearchRow('../Datalets/Datalet.aspx?sIndex=0&idx=1')">
+    <td><input name="chkPin" value="000:99000001:2026"></td>
+    <td><div>99000001</div></td>
+    <td><div>DOE JANE A</div></td>
+    <td><div>100 EXAMPLE AVE NE</div></td>
+    <td><div>510</div></td>
+    <td><div>R - 1-FAMILY DWELLING</div></td>
+  </tr>
+  <tr class="SearchResults"
+      onclick="javascript:selectSearchRow('../Datalets/Datalet.aspx?sIndex=0&idx=2')">
+    <td><input name="chkPin" value="000:99000002:2026"></td>
+    <td><div>99000002</div></td>
+    <td><div>DOE JOHN Q &amp; MARY</div></td>
+    <td><div>250 SAMPLE ST SW</div></td>
+    <td><div>510</div></td>
+    <td><div>R - 1-FAMILY DWELLING</div></td>
+  </tr>
+</table>

@@ -483,7 +483,33 @@ class IasWorldAuditorClient:
         return {overrides.get(key, key): value for key, value in fields.items()}
 
     def _get(self, url: str) -> tuple[str, str]:
-        return self._request(url)
+        body, final_url = self._request(url)
+        if "disclaimer.aspx" in final_url.lower():
+            body, final_url = self._accept_disclaimer(body, final_url, url)
+        return body, final_url
+
+    def _accept_disclaimer(
+        self,
+        html: str,
+        disclaimer_url: str,
+        target_url: str,
+    ) -> tuple[str, str]:
+        """Accept the Tyler Public Access interstitial disclaimer, then retry.
+
+        Some iasWorld counties (Stark) gate every page behind a
+        ``Search/Disclaimer.aspx`` interstitial until an "Agree" postback sets a
+        session cookie. Without this the client would harvest the disclaimer
+        page's ViewState and post it to ``commonsearch.aspx``, which the site
+        answers with HTTP 500. The agree control is a ``<button>``, which
+        ``_FormParser`` ignores, so the hidden ViewState fields come back clean
+        and we only add the button name ourselves. Counties without a disclaimer
+        never reach this path.
+        """
+        form_data, _ = self._parse_form(html)
+        form_data["btAgree"] = "Agree"
+        self._post(disclaimer_url, form_data, referer=disclaimer_url)
+        # The cookie is now set; re-request what the caller originally asked for.
+        return self._request(target_url)
 
     def _post(
         self,
